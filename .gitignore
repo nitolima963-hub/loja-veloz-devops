@@ -1,0 +1,28 @@
+
+# Arquivos gerados pelo Maven
+target/
+**/target/
+
+# Configuracoes do VS Code
+.vscode/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Variaveis de ambiente e senhas locais
+.env
+.env.*
+!.env.example
+
+# Arquivos de log
+*.log
+
+# Arquivos temporarios
+*.tmp
+*.bak
+
+# Configuracoes locais de ferramentas Java
+.settings/
+.classpath
+.project
