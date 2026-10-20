@@ -3,123 +3,102 @@
 
 ## Sobre o projeto
 
-A Loja Veloz é um projeto acadêmico desenvolvido para colocar em prática alguns conceitos de DevOps, computação em nuvem e microsserviços.
+A Loja Veloz é um projeto acadêmico que desenvolvi para colocar em prática alguns conceitos de DevOps e microsserviços.
 
-A ideia foi criar um sistema simples de loja virtual, dividido em três serviços: Pedidos, Estoque e Pagamentos.
-
-Durante o desenvolvimento, utilizei ferramentas como Docker, Kubernetes, GitHub Actions e Terraform para entender melhor como funciona a execução e o gerenciamento de aplicações.
+A ideia foi criar um sistema simples de loja virtual, utilizando Java, Spring Boot, Docker, Kubernetes e outras ferramentas estudadas durante a atividade.
 
 ## Tecnologias utilizadas
 
-- Java 21
-- Spring Boot
+- Java 21 e Spring Boot
+- Spring Cloud Gateway
 - PostgreSQL
 - Docker e Docker Compose
 - Kubernetes
-- GitHub Actions
-- GitHub Container Registry
+- GitHub Actions e GHCR
 - Terraform
-- Spring Boot Actuator
-- Metrics Server
+- Spring Boot Actuator e Metrics Server
 
-## Como o projeto funciona
+## Funcionamento do sistema
 
-O sistema foi dividido em três partes:
+O projeto possui quatro serviços:
 
-**Pedidos:** permite cadastrar, consultar, atualizar e excluir pedidos.
+- **Pedidos:** cadastro, consulta, atualização e exclusão de pedidos.
+- **Estoque:** cadastro de produtos e controle de quantidades.
+- **Pagamentos:** registro de pagamentos simulados.
+- **API Gateway:** direciona as requisições para os outros serviços.
 
-**Estoque:** permite cadastrar produtos e controlar a quantidade disponível.
+Os três microsserviços utilizam tabelas separadas no mesmo banco PostgreSQL. O Gateway permite acessar todas as APIs pela porta 8083.
 
-**Pagamentos:** permite registrar pagamentos simulados, como PIX e boleto.
+Os serviços ainda não possuem integração automática entre si.
 
-Os três serviços utilizam PostgreSQL para guardar as informações. Nesta versão, cada serviço possui sua própria API, mas eles ainda não se comunicam automaticamente.
+## Executando com Docker
 
-## Executando o projeto
+Para executar o projeto, é necessário ter o Docker Desktop instalado.
 
-Para executar o projeto é necessário ter o Docker Desktop instalado e funcionando.
+Primeiro, crie um arquivo `.env` na pasta principal com a variável `DB_PASSWORD` e uma senha local.
 
-Também é necessário criar um arquivo `.env` na pasta principal e configurar a variável `DB_PASSWORD` com a senha do banco local.
+Depois, execute:
 
-Depois, basta abrir o terminal na pasta principal e executar:
-
-docker compose up -d --build
+    docker compose up -d --build
 
 Para verificar os contêineres:
 
-docker compose ps
+    docker compose ps
 
-As APIs podem ser acessadas pelos seguintes endereços:
+Endereços para acessar pelo API Gateway:
 
-- Pedidos: http://localhost:8080/pedidos
-- Estoque: http://localhost:8081/produtos
-- Pagamentos: http://localhost:8082/pagamentos
+- Pedidos: http://localhost:8083/pedidos
+- Estoque: http://localhost:8083/produtos
+- Pagamentos: http://localhost:8083/pagamentos
 
 ## Kubernetes
 
-Também fiz a implantação dos serviços no Kubernetes, utilizando o ambiente local do Docker Desktop.
+Também configurei os serviços no Kubernetes utilizando arquivos YAML disponíveis na pasta `k8s`.
 
-Criei arquivos YAML para configurar os serviços, o PostgreSQL, o armazenamento e as verificações de funcionamento.
+Durante os testes, consegui executar os serviços e verificar seus Pods.
 
-Para verificar se os serviços estão funcionando:
+Para consultar:
 
-kubectl get pods
+    kubectl get pods
 
-kubectl get deployments
+O API Gateway também foi instalado e testado no Kubernetes.
 
-Os arquivos estão disponíveis na pasta `k8s`.
+## GitHub Actions
 
-## Automação com GitHub Actions
+Configurei o GitHub Actions para executar automaticamente a compilação e os testes dos quatro serviços.
 
-Configurei o GitHub Actions para automatizar algumas tarefas do projeto.
+Quando os testes passam na branch principal, as imagens Docker são publicadas no GitHub Container Registry.
 
-Sempre que envio alterações para a branch principal, o GitHub executa a compilação e os testes dos três serviços.
+Após adicionar o Gateway, os oito processos da automação foram concluídos com sucesso.
 
-Se tudo funcionar, as imagens Docker são publicadas no GitHub Container Registry.
+## Monitoramento e escalabilidade
 
-Isso ajuda a identificar erros e evita precisar realizar todas essas tarefas manualmente.
+Utilizei o Spring Boot Actuator para verificar o funcionamento das aplicações e o Metrics Server para acompanhar o consumo de CPU e memória.
 
-## Monitoramento
+Também configurei o HPA no serviço de Pedidos, com mínimo de 1 Pod, máximo de 3 Pods e meta de CPU de 70%.
 
-Utilizei o Spring Boot Actuator e o Kubernetes para verificar o funcionamento das aplicações.
-
-Também configurei o Metrics Server para acompanhar o consumo de CPU e memória.
-
-Para consultar os logs:
-
-kubectl logs deployment/pedidos
-
-Para verificar o consumo de recursos:
-
-kubectl top pods
-
-## Escalabilidade
-
-Configurei o HPA no serviço de Pedidos.
-
-Ele permite aumentar ou diminuir automaticamente a quantidade de Pods dependendo do uso de CPU.
-
-A configuração utiliza:
-
-- Mínimo de 1 Pod
-- Máximo de 3 Pods
-- Meta de CPU de 70%
-
-Consegui verificar que o HPA estava recebendo as métricas corretamente.
+Para as atualizações dos serviços no Kubernetes, utilizei a estratégia Rolling Update.
 
 ## Terraform
 
 Utilizei o Terraform para criar um namespace chamado `loja-veloz` no Kubernetes.
 
-Essa etapa serviu para praticar o conceito de infraestrutura como código, que permite criar recursos utilizando arquivos de configuração.
+Essa etapa me ajudou a entender melhor o conceito de infraestrutura como código.
 
-Os arquivos estão na pasta `terraform`.
+Os arquivos estão na pasta `terraform`. Os serviços continuam implantados no namespace `default`.
 
 ## Conclusão
 
-Com esse projeto, consegui colocar em prática vários conteúdos relacionados a desenvolvimento e DevOps.
+Com esse projeto, consegui colocar em prática vários conteúdos relacionados a desenvolvimento de sistemas e DevOps.
 
-Aprendi a criar APIs com Java e Spring Boot, utilizar banco de dados PostgreSQL, executar aplicações com Docker e Kubernetes e automatizar testes e publicação de imagens com GitHub Actions.
+Aprendi a criar APIs com Java e Spring Boot, utilizar o PostgreSQL para armazenar informações e executar aplicações utilizando Docker e Kubernetes.
 
-Também consegui trabalhar com monitoramento, escalabilidade e infraestrutura como código.
+Também consegui configurar o API Gateway, automatizar testes e publicação de imagens com GitHub Actions e utilizar ferramentas de monitoramento e escalabilidade.
 
-O projeto ainda pode receber melhorias, como a comunicação automática entre os microsserviços e a implementação de um API Gateway.
+O Terraform foi outra ferramenta importante para entender melhor como funciona a criação de infraestrutura por meio de código.
+
+O projeto me ajudou a compreender como diferentes ferramentas podem trabalhar juntas para organizar, executar e acompanhar uma aplicação.
+
+Ainda existem melhorias que podem ser feitas, mas consegui desenvolver e testar as principais partes que foram implementadas durante a atividade.
+
+Claro que ainda preciso pratica mais e entende bastente o conceito, mas foi um projeto longo mais bem pratico, com bastente desafios
