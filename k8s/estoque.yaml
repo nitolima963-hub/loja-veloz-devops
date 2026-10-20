@@ -1,0 +1,84 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: estoque
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: estoque
+
+  template:
+    metadata:
+      labels:
+        app: estoque
+
+    spec:
+      containers:
+        - name: estoque
+          image: loja-veloz/estoque:1.0.0
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8081
+
+          envFrom:
+            - configMapRef:
+                name: loja-veloz-config
+
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DB_PASSWORD
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            periodSeconds: 10
+            timeoutSeconds: 5
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            periodSeconds: 20
+            timeoutSeconds: 5
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: estoque
+
+spec:
+  selector:
+    app: estoque
+
+  ports:
+    - port: 8081
+      targetPort: 8081
+
+  type: ClusterIP

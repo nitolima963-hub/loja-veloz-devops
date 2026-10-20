@@ -1,0 +1,84 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pagamentos
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: pagamentos
+
+  template:
+    metadata:
+      labels:
+        app: pagamentos
+
+    spec:
+      containers:
+        - name: pagamentos
+          image: loja-veloz/pagamentos:1.0.0
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8082
+
+          envFrom:
+            - configMapRef:
+                name: loja-veloz-config
+
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DB_PASSWORD
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            periodSeconds: 10
+            timeoutSeconds: 5
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            periodSeconds: 20
+            timeoutSeconds: 5
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pagamentos
+
+spec:
+  selector:
+    app: pagamentos
+
+  ports:
+    - port: 8082
+      targetPort: 8082
+
+  type: ClusterIP
