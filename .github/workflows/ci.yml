@@ -1,19 +1,18 @@
+
 name: CI - Loja Veloz
 
 on:
   push:
     branches:
       - main
-
   pull_request:
     branches:
       - main
-
   workflow_dispatch:
 
 jobs:
-  build-and-test:
-    name: Build e Testes - ${{ matrix.service }}
+  testes:
+    name: Testar ${{ matrix.service }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -23,6 +22,7 @@ jobs:
           - pedidos-service
           - estoque-service
           - pagamentos-service
+          - api-gateway
 
     services:
       postgres:
@@ -44,7 +44,7 @@ jobs:
       DB_PASSWORD: dev123
 
     steps:
-      - name: Baixar o codigo
+      - name: Baixar o codigo do GitHub
         uses: actions/checkout@v4
 
       - name: Configurar Java 21
@@ -53,7 +53,7 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-          cache-dependency-path: '${{ matrix.service }}/pom.xml'
+          cache-dependency-path: ${{ matrix.service }}/pom.xml
 
       - name: Dar permissao ao Maven Wrapper
         working-directory: ${{ matrix.service }}
@@ -63,12 +63,12 @@ jobs:
         working-directory: ${{ matrix.service }}
         run: ./mvnw clean verify
 
-  publish-images:
-    name: Publicar imagem - ${{ matrix.service }}
+  publicar-imagens:
+    name: Publicar ${{ matrix.service }}
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: testes
 
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
 
     permissions:
       contents: read
@@ -81,34 +81,30 @@ jobs:
           - pedidos-service
           - estoque-service
           - pagamentos-service
+          - api-gateway
 
     steps:
-      - name: Baixar o codigo
+      - name: Baixar o codigo do GitHub
         uses: actions/checkout@v4
 
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Autenticar no GitHub Container Registry
+      - name: Fazer login no GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Gerar nome da imagem
-        id: image
-        shell: bash
-        run: |
-          SERVICE="${{ matrix.service }}"
-          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}/${SERVICE}"
-          echo "name=$IMAGE" >> "$GITHUB_OUTPUT"
-
-      - name: Construir e publicar a imagem
+      - name: Criar e publicar imagem Docker
         uses: docker/build-push-action@v6
+        env:
+          IMAGE_NAME: ghcr.io/nitolima963-hub/loja-veloz-devops/${{ matrix.service }}
         with:
           context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
           push: true
           tags: |
-            ${{ steps.image.outputs.name }}:latest
-            ${{ steps.image.outputs.name }}:1.0.0
+            ghcr.io/nitolima963-hub/loja-veloz-devops/${{ matrix.service }}:latest
+            ghcr.io/nitolima963-hub/loja-veloz-devops/${{ matrix.service }}:1.0.0
