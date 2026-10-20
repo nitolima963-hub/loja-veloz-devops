@@ -1,3 +1,4 @@
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,6 +6,12 @@ metadata:
 
 spec:
   replicas: 1
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
 
   selector:
     matchLabels:
@@ -18,8 +25,8 @@ spec:
     spec:
       containers:
         - name: pedidos
-          image: loja-veloz/pedidos:1.0.0
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/nitolima963-hub/loja-veloz-devops/pedidos-service:1.0.0
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 8080

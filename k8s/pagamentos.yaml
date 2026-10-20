@@ -7,6 +7,12 @@ metadata:
 spec:
   replicas: 1
 
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
   selector:
     matchLabels:
       app: pagamentos
@@ -19,8 +25,8 @@ spec:
     spec:
       containers:
         - name: pagamentos
-          image: loja-veloz/pagamentos:1.0.0
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/nitolima963-hub/loja-veloz-devops/pagamentos-service:1.0.0
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 8082
@@ -62,7 +68,6 @@ spec:
             requests:
               memory: "256Mi"
               cpu: "100m"
-
             limits:
               memory: "512Mi"
               cpu: "500m"
